@@ -3,6 +3,7 @@ const GST_WARNING = "+18% GST Extra";
 const EXTENSION_MARKER = "data-numakers-gst-enhanced";
 const INLINE_NOTE_MARKER = "data-numakers-gst-note";
 const PARENT_LAYOUT_CLASS = "numakers-gst-parent";
+const PRICE_ROW_CLASS = "numakers-gst-price-row";
 
 /*
  * Fill these selector definitions once we inspect the live DOM.
@@ -12,10 +13,16 @@ const PRICE_LOCATIONS = [
   {
     id: "primary-price",
     containerSelector: "div.main-product__block.main-product__block-price",
-    priceSelector: ".f-price__sale .f-price-item--sale",
+    priceSelector: [
+      ".f-price__sale .f-price-item--sale",
+      ".f-price__regular .f-price-item--regular"
+    ],
     insertionTargetSelector: ".f-price",
     insertion: "beforebegin",
-    inlineNoteTargetSelector: ".f-price__sale .f-price-item--sale",
+    inlineNoteTargetSelector: [
+      ".f-price__sale .f-price-item--sale",
+      ".f-price__regular .f-price-item--regular"
+    ],
     summaryLabel: "Cost:",
     summarySuffix: " (+ shipping)",
     showBlockNote: false,
@@ -98,15 +105,34 @@ function buildEnhancementBlock(originalPrice, location) {
   return block;
 }
 
+function findFirstMatch(container, selectorOrSelectors) {
+  if (!selectorOrSelectors) {
+    return null;
+  }
+
+  const selectors = Array.isArray(selectorOrSelectors)
+    ? selectorOrSelectors
+    : [selectorOrSelectors];
+
+  for (const selector of selectors) {
+    const match = container.matches(selector)
+      ? container
+      : container.querySelector(selector);
+
+    if (match) {
+      return match;
+    }
+  }
+
+  return null;
+}
+
 function addInlineNote(container, location) {
   if (!location.showInlineNote || !location.inlineNoteTargetSelector) {
     return;
   }
 
-  const noteTarget = container.matches(location.inlineNoteTargetSelector)
-    ? container
-    : container.querySelector(location.inlineNoteTargetSelector);
-
+  const noteTarget = findFirstMatch(container, location.inlineNoteTargetSelector);
   if (!noteTarget) return;
   if (noteTarget.querySelector(`[${INLINE_NOTE_MARKER}="true"][data-location-id="${location.id}"]`)) {
     return;
@@ -128,6 +154,14 @@ function tagLayoutParent(node) {
   node.parentElement.classList.add(PARENT_LAYOUT_CLASS);
 }
 
+function tagPriceRow(node) {
+  if (!node) {
+    return;
+  }
+
+  node.classList.add(PRICE_ROW_CLASS);
+}
+
 function enhanceLocation(location) {
   if (!location.containerSelector || !location.priceSelector) {
     return;
@@ -136,10 +170,7 @@ function enhanceLocation(location) {
   const container = document.querySelector(location.containerSelector);
   if (!container) return;
 
-  const priceNode = container.matches(location.priceSelector)
-    ? container
-    : container.querySelector(location.priceSelector);
-
+  const priceNode = findFirstMatch(container, location.priceSelector);
   if (!priceNode) return;
   if (container.querySelector(`[${EXTENSION_MARKER}="true"][data-location-id="${location.id}"]`)) {
     return;
@@ -152,9 +183,7 @@ function enhanceLocation(location) {
   enhancement.setAttribute("data-location-id", location.id);
 
   const insertionTarget = location.insertionTargetSelector
-    ? (container.matches(location.insertionTargetSelector)
-      ? container
-      : container.querySelector(location.insertionTargetSelector))
+    ? findFirstMatch(container, location.insertionTargetSelector)
     : container;
 
   const target = insertionTarget || container;
@@ -182,6 +211,7 @@ function enhanceLocation(location) {
   }
 
   tagLayoutParent(enhancement);
+  tagPriceRow(target);
   addInlineNote(container, location);
 }
 

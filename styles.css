@@ -2,6 +2,10 @@
   flex-wrap: wrap;
 }
 
+.numakers-gst-price-row {
+  width: 100%;
+}
+
 .numakers-gst-enhancement {
   margin-bottom: 1rem;
   padding: 1rem 1.5rem;
