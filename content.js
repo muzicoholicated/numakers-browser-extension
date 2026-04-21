@@ -9,48 +9,24 @@ const TABLE_MARKER = "data-numakers-gst-table-enhanced";
 const GST_COLUMN_CLASS = "numakers-gst-table-value";
 const WITHOUT_GST_SUFFIX = " (without GST)";
 
-/*
- * Fill these selector definitions once we inspect the live DOM.
- * Each location represents one price area we want to enhance.
- */
-const PRICE_LOCATIONS = [
-  {
-    id: "primary-price",
-    containerSelector: "div.main-product__block.main-product__block-price",
-    priceSelector: [
-      ".f-price__sale .f-price-item--sale",
-      ".f-price__regular .f-price-item--regular"
-    ],
-    insertionTargetSelector: ".f-price",
-    insertion: "beforebegin",
-    inlineNoteTargetSelector: [
-      ".f-price__sale .f-price-item--sale",
-      ".f-price__regular .f-price-item--regular"
-    ],
-    summaryLabel: "Cost:",
-    summarySuffix: " (+ shipping)",
-    showBlockNote: false,
-    showInlineNote: true
-  },
-  {
-    id: "bulk-slab-1",
-    containerSelector: "",
-    priceSelector: "",
-    insertion: "afterend"
-  },
-  {
-    id: "bulk-slab-2",
-    containerSelector: "",
-    priceSelector: "",
-    insertion: "afterend"
-  },
-  {
-    id: "bulk-slab-3",
-    containerSelector: "",
-    priceSelector: "",
-    insertion: "afterend"
-  }
-];
+const PRICE_LOCATIONS = {
+  id: "primary-price",
+  containerSelector: "div.main-product__block.main-product__block-price",
+  priceSelector: [
+    ".f-price__sale .f-price-item--sale",
+    ".f-price__regular .f-price-item--regular"
+  ],
+  insertionTargetSelector: ".f-price",
+  insertion: "beforebegin",
+  inlineNoteTargetSelector: [
+    ".f-price__sale .f-price-item--sale",
+    ".f-price__regular .f-price-item--regular"
+  ],
+  summaryLabel: "Cost:",
+  summarySuffix: " (+ shipping)",
+  showBlockNote: false,
+  showInlineNote: true
+};
 
 let refreshTimer = null;
 let suppressPriceObserver = false;
@@ -349,7 +325,7 @@ function syncLocation(location) {
 
 function runEnhancements() {
   suppressPriceObserver = true;
-  PRICE_LOCATIONS.forEach(syncLocation);
+  syncLocation(PRICE_LOCATIONS);
   syncBulkPricingTables();
   window.setTimeout(() => {
     suppressPriceObserver = false;
@@ -369,10 +345,10 @@ function scheduleRefresh() {
 }
 
 function bindPriceContainerObserver() {
-  const nextContainers = PRICE_LOCATIONS
-    .map((location) => location.containerSelector && document.querySelector(location.containerSelector))
-    .filter(Boolean);
-
+  const priceContainer = PRICE_LOCATIONS.containerSelector
+    ? document.querySelector(PRICE_LOCATIONS.containerSelector)
+    : null;
+  const nextContainers = priceContainer ? [priceContainer] : [];
   const hasSameContainers = nextContainers.length === observedPriceContainers.length
     && nextContainers.every((container, index) => container === observedPriceContainers[index]);
 
