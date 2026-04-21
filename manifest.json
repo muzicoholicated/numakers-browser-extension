@@ -1,8 +1,25 @@
 {
   "manifest_version": 3,
-  "name": "Numakers GST Price Display",
+  "name": "Numakers Browser Extension",
   "version": "0.1.0",
   "description": "Cosmetically adds GST-inclusive pricing cues to Numakers product pages without overwriting the original prices.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "author": "Prakhar Kumar",
+  "developer": {
+    "name": "Prakhar Kumar",
+    "url": "https://github.com/muzicoholicated/numakers-browser-extension"
+  },
+  "homepage_url": "https://github.com/muzicoholicated/numakers-browser-extension",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "numakers-brower-extension@muzicoholicated.github",
+      "strict_min_version": "109.0"
+    }
+  },
   "content_scripts": [
     {
       "matches": [
