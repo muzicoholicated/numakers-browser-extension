@@ -52,6 +52,15 @@ If the page actually has the base price plus four bulk slabs, we can expand the 
 3. Click Load Temporary Add-on.
 4. Select any file inside this folder, such as `manifest.json`.
 
+## GitHub build
+
+GitHub Actions can package the extension for you.
+
+- The workflow creates a distributable `.zip` from the repository contents.
+- The `assets/` directory is excluded from the packaged extension.
+- On pushes to `main`, the ZIP is available as a workflow artifact.
+- On tags like `v0.1.0`, the ZIP is also attached to the GitHub release.
+
 ## Recommended distribution
 
 For the least friction, use different channels for Firefox and Chromium browsers:
