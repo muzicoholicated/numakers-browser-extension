@@ -5,6 +5,9 @@ const INLINE_NOTE_MARKER = "data-numakers-gst-note";
 const PARENT_LAYOUT_CLASS = "numakers-gst-parent";
 const PRICE_ROW_CLASS = "numakers-gst-price-row";
 const REFRESH_DELAY_MS = 120;
+const TABLE_MARKER = "data-numakers-gst-table-enhanced";
+const GST_COLUMN_CLASS = "numakers-gst-table-value";
+const WITHOUT_GST_SUFFIX = " (without GST)";
 
 /*
  * Fill these selector definitions once we inspect the live DOM.
@@ -172,6 +175,114 @@ function tagPriceRow(node) {
   node.classList.add(PRICE_ROW_CLASS);
 }
 
+function normalizeText(text) {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function isQuantityHeader(text) {
+  return /^(qty|quantity)$/i.test(normalizeText(text));
+}
+
+function isPriceHeader(text) {
+  return normalizeText(text).length > 0;
+}
+
+function createTableCell(tagName, text, className) {
+  const cell = document.createElement(tagName);
+  if (className) {
+    cell.className = className;
+  }
+
+  const paragraph = document.createElement("p");
+  paragraph.style.textAlign = "center";
+  paragraph.textContent = text;
+  cell.append(paragraph);
+  return cell;
+}
+
+function setCellText(cell, text) {
+  const paragraph = cell.querySelector("p");
+  if (paragraph) {
+    paragraph.textContent = text;
+    return;
+  }
+
+  cell.textContent = text;
+}
+
+function getHeaderLabel(cell) {
+  return normalizeText(cell.textContent || "");
+}
+
+function hasWithoutGstSuffix(text) {
+  return /\(without gst\)$/i.test(normalizeText(text));
+}
+
+function syncBulkPricingTables() {
+  const tables = document.querySelectorAll(
+    '.main-product__block-custom_liquid table:not([' + TABLE_MARKER + '="true"])'
+  );
+
+  tables.forEach((table) => {
+    const rows = Array.from(table.querySelectorAll("tr"));
+    let enhanced = false;
+
+    rows.forEach((row) => {
+      const cells = Array.from(row.children).filter((cell) => /^(TD|TH)$/.test(cell.tagName));
+      if (cells.length === 1) {
+        const colspan = Number.parseInt(cells[0].getAttribute("colspan") || "1", 10);
+        if (Number.isFinite(colspan) && colspan >= 2) {
+          cells[0].setAttribute("colspan", String(colspan + 1));
+          enhanced = true;
+        }
+        return;
+      }
+
+      if (cells.length !== 2) {
+        return;
+      }
+
+      const [quantityCell, priceCell] = cells;
+      const quantityText = normalizeText(quantityCell.textContent || "");
+      const priceText = normalizeText(priceCell.textContent || "");
+
+      if (isQuantityHeader(quantityText) && isPriceHeader(priceText)) {
+        const originalHeaderLabel = getHeaderLabel(priceCell);
+        const gstHeaderCell = createTableCell(
+          priceCell.tagName.toLowerCase(),
+          originalHeaderLabel
+        );
+        const baseHeaderLabel = hasWithoutGstSuffix(originalHeaderLabel)
+          ? originalHeaderLabel
+          : `${originalHeaderLabel}${WITHOUT_GST_SUFFIX}`;
+
+        setCellText(priceCell, baseHeaderLabel);
+        priceCell.classList.add(GST_COLUMN_CLASS);
+        quantityCell.after(gstHeaderCell);
+        enhanced = true;
+        return;
+      }
+
+      const basePrice = parsePrice(priceText);
+      if (!quantityText || basePrice === null) {
+        return;
+      }
+
+      const gstCell = createTableCell(
+        priceCell.tagName.toLowerCase(),
+        formatPrice(basePrice * (1 + GST_RATE)),
+        GST_COLUMN_CLASS
+      );
+      quantityCell.after(gstCell);
+      enhanced = true;
+    });
+
+    if (enhanced) {
+      table.setAttribute(TABLE_MARKER, "true");
+    }
+  });
+}
+
 function getEnhancementBlock(location) {
   return document.querySelector(
     `[${EXTENSION_MARKER}="true"][data-location-id="${location.id}"]`
@@ -239,6 +350,7 @@ function syncLocation(location) {
 function runEnhancements() {
   suppressPriceObserver = true;
   PRICE_LOCATIONS.forEach(syncLocation);
+  syncBulkPricingTables();
   window.setTimeout(() => {
     suppressPriceObserver = false;
   }, 0);
