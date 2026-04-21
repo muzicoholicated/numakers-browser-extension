@@ -1,0 +1,40 @@
+.numakers-gst-enhancement {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.6rem;
+  padding: 0.8rem 1rem;
+  border: 2px solid #f28c28;
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(242, 140, 40, 0.16), rgba(255, 236, 214, 0.9));
+  box-shadow: 0 10px 24px rgba(94, 52, 9, 0.12);
+}
+
+.numakers-gst-inclusive {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  line-height: 1.1;
+}
+
+.numakers-gst-inclusive-label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a3b12;
+}
+
+.numakers-gst-inclusive-value {
+  font-size: clamp(1.5rem, 2.4vw, 2.4rem);
+  font-weight: 800;
+  color: #1d1d1b;
+}
+
+.numakers-gst-note {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #8a3b12;
+}

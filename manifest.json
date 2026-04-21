@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Numakers GST Price Display",
+  "version": "0.1.0",
+  "description": "Cosmetically adds GST-inclusive pricing cues to Numakers product pages without overwriting the original prices.",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://india.numakers.com/products/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
