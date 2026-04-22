@@ -78,10 +78,10 @@
 .numakers-cart-gst-summary {
   margin: 0.75rem 0;
   color: var(--numakers-gst-text);
+}
 
-  .scd__subtotal-price {
-    color: var(--numakers-gst-accent);
-  }
+.numakers-cart-gst-summary-value {
+  color: var(--numakers-gst-accent);
 }
 
 .numakers-cart-gst-shipping {

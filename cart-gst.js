@@ -4,11 +4,16 @@ const CART_ITEM_MARKER = "data-numakers-cart-gst-item";
 const CART_SUMMARY_MARKER = "data-numakers-cart-gst-summary";
 const CART_SHIPPING_MARKER = "data-numakers-cart-gst-shipping";
 const CART_DRAWER_SELECTOR = "#shopify-section-cart-drawer";
+const CART_PAGE_SELECTOR = '[data-cart-wrapper]';
+const CART_PAGE_HEADER_MARKER = "data-numakers-cart-gst-head";
+const CART_PAGE_CELL_MARKER = "data-numakers-cart-gst-cell";
 const CART_LABELS = {
   itemInclusiveLabel: "Item cost",
   itemLineTotalLabel: "Total (incl. GST)",
   summaryInclusiveLabel: "Total (incl. GST)",
-  shippingMessage: "Shipping will be extra at checkout, and shipping charges will attract an additional 18% GST."
+  shippingMessage: "Shipping will be extra at checkout, and shipping charges will attract an additional 18% GST.",
+  pageSubtotalLabel: "Subtotal",
+  pageTotalLabel: "Total"
 };
 
 let cartRefreshTimer = null;
@@ -110,10 +115,6 @@ function getCartItemsWithin(scope) {
       return;
     }
 
-    if (!findCurrentPriceNode(item)) {
-      return;
-    }
-
     uniqueItems.add(item);
   });
 
@@ -121,12 +122,21 @@ function getCartItemsWithin(scope) {
 }
 
 function getCartContexts() {
+  const contexts = [];
   const drawer = document.querySelector(CART_DRAWER_SELECTOR);
-  if (!(drawer instanceof HTMLElement)) {
-    return [];
+  const page = window.location.pathname.startsWith("/cart")
+    ? document.querySelector(CART_PAGE_SELECTOR)
+    : null;
+
+  if (drawer instanceof HTMLElement && getCartItemsWithin(drawer).length > 0) {
+    contexts.push({ kind: "drawer", root: drawer });
   }
 
-  return getCartItemsWithin(drawer).length > 0 ? [drawer] : [];
+  if (page instanceof HTMLElement && getCartItemsWithin(page).length > 0) {
+    contexts.push({ kind: "page", root: page });
+  }
+
+  return contexts;
 }
 
 function buildItemEnhancement(unitPriceWithGst, lineTotalWithGst) {
@@ -146,6 +156,26 @@ function buildItemEnhancement(unitPriceWithGst, lineTotalWithGst) {
   return block;
 }
 
+function buildPageValueNode(value) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "sf-cart__item-discount-prices";
+
+  const finalPrice = document.createElement("p");
+  finalPrice.className = "sf-cart__item--final-price";
+
+  const label = document.createElement("span");
+  label.className = "visually-hidden";
+  label.textContent = "GST total";
+
+  const amount = document.createElement("span");
+  amount.className = "order-discount";
+  amount.textContent = formatCartPrice(value);
+
+  finalPrice.append(label, amount);
+  wrapper.append(finalPrice);
+  return wrapper;
+}
+
 function getExistingItemEnhancement(item) {
   const blocks = Array.from(item.querySelectorAll(`[${CART_ITEM_MARKER}="true"]`));
   const [primaryBlock, ...duplicateBlocks] = blocks;
@@ -153,6 +183,15 @@ function getExistingItemEnhancement(item) {
   duplicateBlocks.forEach((block) => block.remove());
 
   return primaryBlock || null;
+}
+
+function getExistingPageCell(item) {
+  const cells = Array.from(item.querySelectorAll(`[${CART_PAGE_CELL_MARKER}="true"]`));
+  const [primaryCell, ...duplicateCells] = cells;
+
+  duplicateCells.forEach((cell) => cell.remove());
+
+  return primaryCell || null;
 }
 
 function syncItemEnhancement(item) {
@@ -191,8 +230,112 @@ function syncItemEnhancement(item) {
   return lineTotalWithGst;
 }
 
+function findPageSubtotalCell(item) {
+  return item.querySelector(".sf-cart__table-subtotal");
+}
+
+function findPageLineTotalNode(item) {
+  const selectors = [
+    "[data-cart-item-final-price]",
+    ".scd-item__original_line_price[data-cart-item-original-price]",
+    "[data-cart-item-original-price]"
+  ];
+
+  for (const selector of selectors) {
+    const matches = Array.from(item.querySelectorAll(selector));
+    const match = matches.find((node) => {
+      if (!(node instanceof HTMLElement) || !isNodeVisible(node)) {
+        return false;
+      }
+
+      const text = normalizeCartText(node.textContent);
+      return parseCartPrice(text) !== null;
+    });
+
+    if (match) {
+      return match;
+    }
+  }
+
+  return null;
+}
+
+function sanitizeClonedCartNode(node) {
+  if (!(node instanceof HTMLElement)) {
+    return;
+  }
+
+  const attributes = [
+    "data-cart-subtotal",
+    "data-cart-subtotal-price",
+    "data-cart-item-final-price",
+    "data-cart-item-original-price"
+  ];
+
+  attributes.forEach((attribute) => {
+    node.removeAttribute(attribute);
+  });
+
+  node.querySelectorAll(
+    "[data-cart-subtotal], [data-cart-subtotal-price], [data-cart-item-final-price], [data-cart-item-original-price]"
+  ).forEach((child) => {
+    attributes.forEach((attribute) => {
+      child.removeAttribute(attribute);
+    });
+  });
+}
+
+function ensurePageHeader(root) {
+  const tableHead = root.querySelector(".sf-cart__table-head");
+  const subtotalHead = tableHead?.querySelector(".sf-cart__table-subtotal");
+  if (!(tableHead instanceof HTMLElement) || !(subtotalHead instanceof HTMLElement)) {
+    return;
+  }
+
+  subtotalHead.textContent = CART_LABELS.pageSubtotalLabel;
+
+  let gstHead = tableHead.querySelector(`[${CART_PAGE_HEADER_MARKER}="true"]`);
+  if (!gstHead) {
+    gstHead = subtotalHead.cloneNode(true);
+    gstHead.setAttribute(CART_PAGE_HEADER_MARKER, "true");
+    // gstHead.classList.add("numakers-cart-gst-summary-value");
+    subtotalHead.insertAdjacentElement("afterend", gstHead);
+  }
+
+  gstHead.textContent = CART_LABELS.pageTotalLabel;
+}
+
+function syncPageItemCell(item) {
+  const subtotalCell = findPageSubtotalCell(item);
+  const lineTotalNode = findPageLineTotalNode(item);
+  if (!(subtotalCell instanceof HTMLElement) || !(lineTotalNode instanceof HTMLElement)) {
+    return null;
+  }
+
+  const lineTotal = parseCartPrice(lineTotalNode.textContent);
+  if (lineTotal === null) {
+    return null;
+  }
+
+  const lineTotalWithGst = lineTotal * (1 + CART_GST_RATE);
+  let gstCell = getExistingPageCell(item);
+
+  if (!gstCell) {
+    gstCell = subtotalCell.cloneNode(true);
+    gstCell.setAttribute(CART_PAGE_CELL_MARKER, "true");
+    gstCell.classList.add("numakers-gst-table-value");
+    sanitizeClonedCartNode(gstCell);
+    subtotalCell.insertAdjacentElement("afterend", gstCell);
+  } else if (gstCell.previousElementSibling !== subtotalCell) {
+    subtotalCell.insertAdjacentElement("afterend", gstCell);
+  }
+
+  gstCell.replaceChildren(buildPageValueNode(lineTotalWithGst));
+  return lineTotalWithGst;
+}
+
 function findSummaryValueNode(scope) {
-  const match = scope.querySelector("[data-cart-subtotal-price], .scd__subtotal-price");
+  const match = scope.querySelector("[data-cart-subtotal-price], .scd__subtotal-price, .sf-cart-subtotal__price");
   return match instanceof HTMLElement && isNodeVisible(match) ? match : null;
 }
 
@@ -217,6 +360,7 @@ function ensureSummaryRow(summaryMount, summaryRow, totalWithGst) {
 
   if (!gstRow) {
     gstRow = summaryRow.cloneNode(true);
+    sanitizeClonedCartNode(gstRow);
     gstRow.classList.add("numakers-cart-gst-summary");
     gstRow.setAttribute(CART_SUMMARY_MARKER, "true");
 
@@ -232,7 +376,7 @@ function ensureSummaryRow(summaryMount, summaryRow, totalWithGst) {
     labelNode.textContent = CART_LABELS.summaryInclusiveLabel;
   }
 
-  const valueNode = gstRow.querySelector("[data-cart-subtotal-price], .scd__subtotal-price");
+  const valueNode = gstRow.querySelector("[data-cart-subtotal-price], .scd__subtotal-price, .sf-cart-subtotal__price");
   if (valueNode instanceof HTMLElement) {
     valueNode.classList.add("numakers-cart-gst-summary-value");
     valueNode.textContent = formatCartPrice(totalWithGst);
@@ -278,14 +422,20 @@ function runCartEnhancements() {
   const contexts = getCartContexts();
 
   contexts.forEach((context) => {
-    const items = getCartItemsWithin(context);
+    const items = getCartItemsWithin(context.root);
     const totalWithGst = items.reduce((sum, item) => {
-      const itemTotal = syncItemEnhancement(item);
+      const itemTotal = context.kind === "page"
+        ? syncPageItemCell(item)
+        : syncItemEnhancement(item);
       return sum + (itemTotal || 0);
     }, 0);
 
+    if (context.kind === "page") {
+      ensurePageHeader(context.root);
+    }
+
     if (items.length > 0) {
-      syncCartSummary(context, totalWithGst);
+      syncCartSummary(context.root, totalWithGst);
     }
   });
 
@@ -311,7 +461,7 @@ function handleCartInteraction(event) {
     return;
   }
 
-  if (!target.closest(CART_DRAWER_SELECTOR)) {
+  if (!target.closest(`${CART_DRAWER_SELECTOR}, ${CART_PAGE_SELECTOR}`)) {
     return;
   }
 
