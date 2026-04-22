@@ -298,10 +298,10 @@ function ensurePageHeader(root) {
   if (!gstHead) {
     gstHead = subtotalHead.cloneNode(true);
     gstHead.setAttribute(CART_PAGE_HEADER_MARKER, "true");
-    // gstHead.classList.add("numakers-cart-gst-summary-value");
     subtotalHead.insertAdjacentElement("afterend", gstHead);
   }
 
+  subtotalHead.classList.add("numakers-accent");
   gstHead.textContent = CART_LABELS.pageTotalLabel;
 }
 
@@ -324,6 +324,7 @@ function syncPageItemCell(item) {
     gstCell = subtotalCell.cloneNode(true);
     gstCell.setAttribute(CART_PAGE_CELL_MARKER, "true");
     gstCell.classList.add("numakers-gst-table-value");
+    gstCell.classList.add("numakers-accent");
     sanitizeClonedCartNode(gstCell);
     subtotalCell.insertAdjacentElement("afterend", gstCell);
   } else if (gstCell.previousElementSibling !== subtotalCell) {
