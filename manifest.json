@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Numakers Browser Extension",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Cosmetically adds GST-inclusive pricing cues to Numakers product pages, cart page, and cart drawer without overwriting the original prices.",
   "icons": {
     "16": "icons/icon16.png",
