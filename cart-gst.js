@@ -146,6 +146,15 @@ function buildItemEnhancement(unitPriceWithGst, lineTotalWithGst) {
   return block;
 }
 
+function getExistingItemEnhancement(item) {
+  const blocks = Array.from(item.querySelectorAll(`[${CART_ITEM_MARKER}="true"]`));
+  const [primaryBlock, ...duplicateBlocks] = blocks;
+
+  duplicateBlocks.forEach((block) => block.remove());
+
+  return primaryBlock || null;
+}
+
 function syncItemEnhancement(item) {
   const priceNode = findCurrentPriceNode(item);
   if (!priceNode) {
@@ -166,11 +175,15 @@ function syncItemEnhancement(item) {
     return null;
   }
 
-  let block = mount.querySelector(`[${CART_ITEM_MARKER}="true"]`);
+  let block = getExistingItemEnhancement(item);
   if (!block) {
     block = buildItemEnhancement(unitPriceWithGst, lineTotalWithGst);
     mount.before(block);
   } else {
+    if (block.nextElementSibling !== mount) {
+      mount.before(block);
+    }
+
     const nextBlock = buildItemEnhancement(unitPriceWithGst, lineTotalWithGst);
     block.replaceChildren(...nextBlock.childNodes);
   }
@@ -307,8 +320,6 @@ function handleCartInteraction(event) {
     || target.closest("[data-qty-change], .scd-item__remove")
   ) {
     scheduleCartRefresh();
-    window.setTimeout(scheduleCartRefresh, 400);
-    window.setTimeout(scheduleCartRefresh, 900);
   }
 }
 
