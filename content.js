@@ -63,7 +63,7 @@ function createInclusivePrice(gstInclusiveValue, location) {
   const wrapper = document.createElement("div");
   wrapper.className = "numakers-gst-inclusive";
 
-  const label = document.createElement("span");
+  const label = document.createElement("strong");
   label.className = "numakers-gst-inclusive-label";
   label.textContent = location.summaryLabel || "Incl. GST:";
 
@@ -77,7 +77,7 @@ function createInclusivePrice(gstInclusiveValue, location) {
 
 function buildEnhancementBlock(originalPrice, location) {
   const block = document.createElement("div");
-  block.className = "numakers-gst-enhancement";
+  block.className = "numakers-gst-enhancement numakers-gst-roundbox";
   block.setAttribute(EXTENSION_MARKER, "true");
   updateEnhancementBlock(block, originalPrice, location);
   return block;

@@ -1,6 +1,6 @@
 # Numakers Browser Extension
 
-Manifest V3 browser extension for `https://india.numakers.com/products/*`.
+Manifest V3 browser extension for `https://india.numakers.com/*`.
 
 Author: Prakhar Kumar
 
@@ -8,32 +8,20 @@ Repository: https://github.com/muzicoholicated/numakers-browser-extension
 
 ## What it does
 
-- Leaves the original product price untouched.
-- Adds a more prominent GST-inclusive price display next to the existing price.
-- Adds a `+18% GST Extra` note at each configured price location.
-- Runs only on product detail pages.
-- Makes cosmetic changes only.
+- Leaves the original product, cart, and drawer prices untouched.
+- Adds a more prominent GST-inclusive price display next to the existing product price.
+- Adds GST-inclusive cosmetic rows to cart items and cart totals.
+- Adds a shipping note that clarifies shipping is extra and will attract 18% GST at checkout.
+- Runs across the Numakers storefront while keeping all changes cosmetic.
 
 ## Current status
 
-The extension is scaffolded and ready, but the exact Shopify DOM selectors still need to be filled in.
+The extension currently has two independent content scripts:
 
-Edit the `PRICE_LOCATIONS` array in `content.js` and set:
+- `content.js` handles product-page GST display and bulk-pricing table enhancement.
+- `cart-gst.js` handles the cart page and cart drawer GST display.
 
-- `containerSelector`: The parent node around each price area.
-- `priceSelector`: The element containing the original price text.
-- `insertion`: Where the cosmetic GST block should be inserted relative to the container.
-
-## Planned four locations
-
-The code is prepared for four price areas:
-
-1. Main product price
-2. Bulk discount slab 1
-3. Bulk discount slab 2
-4. Bulk discount slab 3
-
-If the page actually has the base price plus four bulk slabs, we can expand the array to five entries in a few seconds.
+Both scripts use `MutationObserver` so they can survive Shopify section rerenders and async cart updates.
 
 ## Install locally
 
@@ -78,6 +66,7 @@ For the least friction, use different channels for Firefox and Chromium browsers
 
 ## Notes
 
-- The content script uses a `MutationObserver` so it can survive Shopify section rerenders.
-- Duplicate UI injection is prevented with a custom data attribute marker.
+- All cart and drawer updates are cosmetic only.
+- Bulk pricing is respected by reading the currently displayed effective price when a discounted or struck-out price is present.
+- Duplicate UI injection is prevented with custom data attribute markers.
 - Price parsing currently supports `Rs.`, `INR`, and rupee-symbol formats.

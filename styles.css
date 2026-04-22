@@ -8,6 +8,15 @@
   --numakers-gst-text: hsl(var(--numakers-theme-hue) 45% 14%);
 }
 
+.numakers-gst-roundbox {
+  border-radius: 1rem;
+  margin: 0.75rem 0;
+  padding: 1rem 1.5rem;
+  border: thin solid var(--numakers-gst-border);
+  background: linear-gradient(225deg, var(--numakers-gst-surface-start), var(--numakers-gst-surface-end));
+  box-shadow: 0 0.75rem 1.5rem var(--numakers-gst-shadow);
+}
+
 .numakers-gst-parent {
   flex-wrap: wrap;
 }
@@ -17,13 +26,7 @@
 }
 
 .numakers-gst-enhancement {
-  margin-bottom: 1rem;
-  padding: 1rem 1.5rem;
-  border: thin solid var(--numakers-gst-border);
-  border-radius: 1rem;
-  background:
-    linear-gradient(135deg, var(--numakers-gst-surface-start), var(--numakers-gst-surface-end));
-  box-shadow: 0 0.75rem 1.5rem var(--numakers-gst-shadow);
+  /* .numakers-gst-roundbox */
 }
 
 .numakers-gst-inclusive {
@@ -53,4 +56,35 @@
 .numakers-gst-table-value {
   color: var(--numakers-gst-accent);
   font-weight: 700;
+}
+
+.numakers-cart-gst-item {
+  /* .numakers-gst-roundbox */
+  padding: 0.5rem 1rem;
+}
+
+.numakers-cart-gst-item-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  color: var(--numakers-gst-text);
+
+  strong {
+    color: var(--numakers-gst-accent);
+  }
+}
+
+
+.numakers-cart-gst-summary {
+  margin: 0.75rem 0;
+  color: var(--numakers-gst-text);
+
+  .scd__subtotal-price {
+    color: var(--numakers-gst-accent);
+  }
+}
+
+.numakers-cart-gst-shipping {
+  /* .numakers-gst-roundbox */
+  color: var(--numakers-gst-text);
 }
